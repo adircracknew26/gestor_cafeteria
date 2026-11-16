@@ -54,7 +54,21 @@ class ApiClient {
     final code = response.statusCode;
     if (code >= 200 && code <= 300) return json;
 
-    throw const NetworkFailure();
+    switch (code) {
+      case 404:
+        throw NotFoundFailure(_extractDetailMessage(json, 'Recurso no encontrado'));
+      case 409:
+        throw ConflictFailure(_extractDetailMessage(json, 'Conflicto en la solicitud'));
+      case 422:
+        throw ValidationFailure(_extractValidationFields(json));
+      case >= 500 && <= 599:
+        throw ServerFailure(code);
+      default:
+        throw UnexpectedFailure(
+          code,
+          _extractDetailMessage(json, 'Error inesperado'),
+        );
+    }
   }
 
   String _extractDetailMessage(dynamic json, String fallback) {
