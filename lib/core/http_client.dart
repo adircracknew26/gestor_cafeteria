@@ -6,10 +6,11 @@ import 'package:gestor_cafeteria/core/failure.dart';
 import 'package:http/http.dart' as http;
 
 class ApiClient {
-  final http.Client? _client;
-  final Uri? baseUrl;
+  final http.Client _client;
+  final Uri baseUrl;
   final Duration timeout;
 
+  // Constructor
   ApiClient({
     http.Client? client,
     String? baseUrl,
@@ -22,17 +23,19 @@ class ApiClient {
                  : (kIsWeb ? 'http://localhost:8000' : 'http://10.0.2.2:8000')),
        );
 
+  // POST, GET, PATCH, DELETE
   Future<dynamic> get(String path) => _send('GET', path);
   Future<dynamic> post(String path, Object body) => _send('POST', path, body);
   Future<dynamic> patch(String path, Object body) => _send('PATCH', path, body);
-  Future<dynamic> update(String path, Object body) =>
-      _send('UPDATE', path, body);
   Future<void> delete(String path) => _send('DELETE', path);
 
+  // Función SEND: Manda la petición al servicio y traduce respuestas/errores
   Future<dynamic> _send(String method, String path, [Object? body]) async {
-    final request = http.Request(method, baseUrl!.resolve(path))
+    // Request: Arma la petición con los headers requeridos
+    final request = http.Request(method, baseUrl.resolve(path))
       ..headers['Accept'] = 'application/json';
 
+    // Si es una petición con body
     if (body != null) {
       request.headers['Content-Type'] = 'application/json';
       request.body = jsonEncode(body);
@@ -40,7 +43,7 @@ class ApiClient {
 
     final http.Response response;
     try {
-      response = await _client!
+      response = await _client
           .send(request)
           .then(http.Response.fromStream)
           .timeout(timeout);
@@ -52,7 +55,9 @@ class ApiClient {
 
     final json = _tryDecode(response);
     final code = response.statusCode;
-    if (code >= 200 && code <= 300) return json;
+
+    // Éxito: códigos 2xx (200 a 299)
+    if (code >= 200 && code < 300) return json;
 
     switch (code) {
       case 404:
