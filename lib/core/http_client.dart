@@ -57,6 +57,29 @@ class ApiClient {
     throw const NetworkFailure();
   }
 
+  String _extractDetailMessage(dynamic json, String fallback) {
+    if (json is Map && json['detail'] is String) {
+      return json['detail'] as String;
+    }
+    return fallback;
+  }
+
+  Map<String, String> _extractValidationFields(dynamic json) {
+    final fields = <String, String>{};
+    if (json is Map && json['detail'] is List) {
+      for (final item in json['detail'] as List) {
+        if (item is Map) {
+          final loc = item['loc'];
+          final msg = item['msg'];
+          if (loc is List && loc.length > 1 && msg != null) {
+            fields[loc[1].toString()] = msg.toString();
+          }
+        }
+      }
+    }
+    return fields;
+  }
+
   dynamic _tryDecode(http.Response response) {
     if (response.bodyBytes.isEmpty) return null;
 
